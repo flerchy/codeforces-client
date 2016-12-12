@@ -1,14 +1,18 @@
 package com.example.flerchy.codeforcesclient;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
 import android.text.Spanned;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
+import android.widget.TextView;
 
 import com.google.gson.JsonArray;
 
@@ -69,8 +73,8 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("result:", r.getBlogEntry().getTitle());
                         map = new HashMap<>();
                         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                            map.put("Title", Html.fromHtml(titles.get(i), Html.FROM_HTML_MODE_COMPACT));
-                            map.put("Contents",  Html.fromHtml(contents.get(i), Html.FROM_HTML_MODE_COMPACT));
+                            map.put("Title", Html.fromHtml(titles.get(i), Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH));
+                            map.put("Contents",  Html.fromHtml(contents.get(i), Html.FROM_HTML_OPTION_USE_CSS_COLORS));
                         } else {
                             map.put("Title", Html.fromHtml(titles.get(i)));
                             map.put("Contents",  Html.fromHtml(contents.get(i)));
@@ -104,5 +108,29 @@ public class MainActivity extends AppCompatActivity {
             lvMain.setAdapter(adapter);
 
         }
+
+      @Override
+      public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+      }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // получим идентификатор выбранного пункта меню
+        int id = item.getItemId();
+
+
+        // Операции для выбранного пункта меню
+        switch (id) {
+            case R.id.action_search:
+                Intent myIntent = new Intent(MainActivity.this, SearchActivity.class);
+                myIntent.putExtra("key", "21"); //Optional parameters
+                MainActivity.this.startActivity(myIntent);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
+}
 
