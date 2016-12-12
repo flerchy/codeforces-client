@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
+import com.google.gson.JsonArray;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -37,9 +39,16 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onResponse(Call call, final Response response) throws IOException {
+                    JSONParser parser = new JSONParser();
                     final String responseData = response.body().string();
-                    Log.d("res:", responseData);
+
+                    Log.d("response:", responseData);
+                    ResponseObject respobj = parser.parse(responseData);
+
+                    Log.d("response status:", respobj.getStatus());
+                    Log.d("result:", respobj.getResults()[0].getBlogEntry().getTitle());
             }
+
         });
     }
 }
