@@ -49,6 +49,11 @@ public class SearchActivity extends AppCompatActivity {
                 Log.d("response:", responseData);
                 respobj = parser.parse(responseData);
                 Log.d("response status:", respobj.getStatus());
+                Result r = respobj.getResults()[0];
+                if (r != null) {
+                    userFirstName = r.getUser().getFirstName();
+                    Log.d("result:", userFirstName);
+                }
             }
 
             @Override
@@ -57,17 +62,6 @@ public class SearchActivity extends AppCompatActivity {
             }
 
         });
-
-        Log.d("response status:", respobj.getStatus());
-        Result r = respobj.getResults()[0];
-        if (r != null) {
-            userFirstName = r.getFirstName();
-
-            Log.d("result:", userFirstName);
-
-            Log.d("result:", r.getHandle());
-
-        }
         TextView tvSearch = (TextView) findViewById(R.id.tvSearch);
         tvSearch.setText(userFirstName);
         Log.d("userFirstName=", userFirstName);

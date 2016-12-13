@@ -11,25 +11,22 @@ class Result {
     private int time;
     private Post blogEntry;
     private Comment comment;
-    private String handle;
-    private String firstName;
-    private String lastName;
-    private String organization;
+    private User user;
 
     public String getFirstName() {
-        return firstName;
+        return user.firstName;
     }
 
     public String getHandle() {
-        return handle;
+        return user.handle;
     }
 
     public String getLastName() {
-        return lastName;
+        return user.lastName;
     }
 
     public String getOrganization() {
-        return organization;
+        return user.organization;
     }
 
     int getTime() {
@@ -43,4 +40,6 @@ class Result {
     Comment getComment() {
         return comment;
     }
+
+    public User getUser() { return user; }
 }

@@ -25,4 +25,11 @@ class User {
     public String getOrganization() {
         return organization;
     }
+
+    User(String h, String fn, String ln, String org) {
+        handle = h;
+        firstName = fn;
+        lastName = ln;
+        organization = org;
+    }
 }
