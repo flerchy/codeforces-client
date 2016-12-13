@@ -3,28 +3,22 @@ package com.example.flerchy.codeforcesclient;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.Html;
-import android.text.Spanned;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 
 import java.io.IOException;
-import java.sql.Ref;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
-import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
 public class SearchActivity extends AppCompatActivity {
-    RefreshFeedTask rfTask;
+    FindUserTask fuTask;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,7 +26,7 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     public void onSearchClick(View view) throws InterruptedException {
-        rfTask = new RefreshFeedTask();
+        fuTask = new FindUserTask();
         HttpUrl.Builder urlBuilder = HttpUrl.parse("http://codeforces.com/api/user.info").newBuilder();
         urlBuilder.addQueryParameter("handles", ((EditText) findViewById(R.id.user_name)).getText().toString());
         String url = urlBuilder.build().toString();
@@ -41,11 +35,11 @@ public class SearchActivity extends AppCompatActivity {
                 .url(url)
                 .build();
 
-        rfTask.execute(request);
+        fuTask.execute(request);
 
     }
 
-    class RefreshFeedTask extends AsyncTask<Request, Void, List<String>> {
+    class FindUserTask extends AsyncTask<Request, Void, List<String>> {
 
         private OkHttpClient client = new OkHttpClient();
         private ResponseObject respobj = new ResponseObject();

@@ -1,5 +1,6 @@
 package com.example.flerchy.codeforcesclient;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import okhttp3.Call;
@@ -32,81 +34,22 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
-    OkHttpClient client = new OkHttpClient();
     List<String> titles = new ArrayList<>();
     List<String> contents = new ArrayList<>();
     ArrayList<HashMap<String, Spanned>> myArrList = new ArrayList<>();
-
-
+    RefreshFeedTask rfTask;
+    ListView lvMain;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
         String url = "http://codeforces.com/api/recentActions?maxCount=5";
-
         Request request = new Request.Builder()
                 .url(url)
                 .build();
-        client.newCall(request).enqueue(new Callback() {
-
-            @Override
-            public void onResponse(Call call, final Response response) throws IOException {
-                    JSONParser parser = new JSONParser();
-                    final String responseData = response.body().string();
-                    HashMap<String, Spanned> map;
-                    Log.d("response:", responseData);
-                    ResponseObject respobj = parser.parse(responseData);
-
-                    Log.d("response status:", respobj.getStatus());
-                    int i = 0;
-                    for(Result r : respobj.getResults()) {
-                        if (r.getComment() != null) {
-                            contents.add(r.getComment().getText());
-
-                            Log.d("result:", r.getComment().getText());
-                        } else {
-                            contents.add("");
-                        }
-                        titles.add(r.getBlogEntry().getTitle());
-                        Log.d("result:", r.getBlogEntry().getTitle());
-                        map = new HashMap<>();
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                            map.put("Title", Html.fromHtml(titles.get(i), Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH));
-                            map.put("Contents",  Html.fromHtml(contents.get(i), Html.FROM_HTML_OPTION_USE_CSS_COLORS));
-                        } else {
-                            map.put("Title", Html.fromHtml(titles.get(i)));
-                            map.put("Contents",  Html.fromHtml(contents.get(i)));
-                        }
-
-                        myArrList.add(map);
-                        i++;
-
-                    }
-
-                }
-
-            @Override
-            public void onFailure(Call call, IOException e) {
-
-            }
-
-
-        });
-
-
-
-            // находим список
-            ListView lvMain = (ListView) findViewById(R.id.lvMain);
-
-            // создаем адаптер
-           SimpleAdapter adapter = new SimpleAdapter(this, myArrList, android.R.layout.simple_list_item_2,
-                new String[] {"Title", "Contents"},
-                new int[] {android.R.id.text1, android.R.id.text2});
-
-            lvMain.setAdapter(adapter);
-
+        rfTask = new RefreshFeedTask(this);
+        rfTask.execute(request);
         }
 
       @Override
@@ -130,6 +73,69 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+    class RefreshFeedTask extends AsyncTask<Request, Void, ArrayList<HashMap<String, Spanned>>> {
+
+        private OkHttpClient client = new OkHttpClient();
+        private ResponseObject respobj = new ResponseObject();
+        private Context mContext;
+
+        public RefreshFeedTask(Context context) {
+            mContext = context;
+        }
+
+        @Override
+        protected ArrayList<HashMap<String, Spanned>> doInBackground(Request... requests) {
+            List<String> userString = new ArrayList<>();
+            String userFirstName = new String();
+            try {
+                Response response = client.newCall(requests[0]).execute();
+                JSONParser parser = new JSONParser();
+                HashMap<String, Spanned> map;
+                final String responseData = response.body().string();
+                Log.d("response:", responseData);
+                respobj = parser.parse(responseData);
+                Log.d("response status:", respobj.getStatus());
+                int i = 0;
+                for(Result r : respobj.getResults()) {
+                    if (r.getComment() != null) {
+                        contents.add(r.getComment().getText());
+
+                        Log.d("result:", r.getComment().getText());
+                    } else {
+                        contents.add("");
+                    }
+                    titles.add(r.getBlogEntry().getTitle());
+                    Log.d("result:", r.getBlogEntry().getTitle());
+                    map = new HashMap<>();
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                        map.put("Title", Html.fromHtml(titles.get(i), Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH));
+                        map.put("Contents",  Html.fromHtml(contents.get(i), Html.FROM_HTML_OPTION_USE_CSS_COLORS));
+                    } else {
+                        map.put("Title", Html.fromHtml(titles.get(i)));
+                        map.put("Contents",  Html.fromHtml(contents.get(i)));
+                    }
+                    myArrList.add(map);
+                    i++;
+                }
+            } catch (IOException e) {
+                Log.e("FAIL:", "FAIL");
+                e.printStackTrace();
+            }
+            return myArrList;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<HashMap<String, Spanned>> hashMaps) {
+            super.onPostExecute(hashMaps);
+            lvMain = (ListView) findViewById(R.id.lvMain);
+            myArrList = hashMaps;
+            SimpleAdapter adapter = new SimpleAdapter(this.mContext, myArrList, android.R.layout.simple_list_item_2,
+                    new String[] {"Title", "Contents"},
+                    new int[] {android.R.id.text1, android.R.id.text2});
+
+            lvMain.setAdapter(adapter);
         }
     }
 }
