@@ -38,15 +38,50 @@
             android:contentDescription="@string/search_button"
             android:onClick="onSearchClick"/>
 
-
     </LinearLayout>
-
-    <TextView
-        android:text="TextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_below="@+id/linearLayout"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="30dp"
-        android:id="@+id/tvSearch" />
+        android:orientation="horizontal">
+    <LinearLayout
+        android:paddingLeft="16dp"
+        android:paddingTop="32dp"
+        android:paddingRight="16dp"
+        android:orientation="vertical"
+        android:layout_weight="1"
+        android:layout_width="match_parent"
+
+        android:layout_height="match_parent">
+
+        <TextView
+            android:visibility="invisible"
+            android:text="TextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:id="@+id/user_first_name"/>
+
+        <TextView
+            android:visibility="invisible"
+            android:text="TextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:id="@+id/user_last_name"/>
+
+        <TextView
+            android:visibility="invisible"
+            android:text="TextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:id="@+id/user_org"/>
+    </LinearLayout>
+    <ImageView
+        android:id="@+id/user_pic"
+        android:layout_weight="1"
+        android:layout_width="match_parent"
+        android:layout_height="200dp" />
+    </LinearLayout>
 </RelativeLayout>

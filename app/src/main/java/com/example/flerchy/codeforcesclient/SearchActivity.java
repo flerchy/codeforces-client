@@ -1,14 +1,18 @@
 package com.example.flerchy.codeforcesclient;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,6 +43,7 @@ public class SearchActivity extends AppCompatActivity {
 
     }
 
+
     class FindUserTask extends AsyncTask<Request, Void, List<String>> {
 
         private OkHttpClient client = new OkHttpClient();
@@ -47,7 +52,10 @@ public class SearchActivity extends AppCompatActivity {
         @Override
         protected List<String> doInBackground(Request... requests) {
             List<String> userString = new ArrayList<>();
-            String userFirstName = new String();
+            String userFirstName = "Anonymous";
+            String userLastName = "Anonymous";
+            String userOrg = "None";
+            String userPic = "http://s3.amazonaws.com/37assets/svn/765-default-avatar.png";
             try {
                 Response response = client.newCall(requests[0]).execute();
                 JSONParser parser = new JSONParser();
@@ -63,11 +71,16 @@ public class SearchActivity extends AppCompatActivity {
             Result r = respobj.getResults()[0];
             if (r != null) {
                 userFirstName = r.getFirstName();
+                userLastName = r.getLastName();
+                userOrg = r.getOrganization();
+                userPic = r.getPic();
                 Log.d("result:", userFirstName);
                 Log.d("result:", r.getHandle());
             }
             userString.add(userFirstName);
-            Log.d("userString:", userString.get(0));
+            userString.add(userLastName);
+            userString.add(userOrg);
+            userString.add(userPic);
             return userString;
         }
 
@@ -75,10 +88,49 @@ public class SearchActivity extends AppCompatActivity {
         protected void onPostExecute(List<String> strings) {
             super.onPostExecute(strings);
             String userFirstName = strings.get(0);
-            Log.d("userString:", userFirstName);
-            TextView tvSearch = (TextView) findViewById(R.id.tvSearch);
-            tvSearch.setText(userFirstName);
-            Log.d("userFirstName=", userFirstName);
+            String userLastName = strings.get(1);
+            String userOrg = strings.get(2);
+
+            new DownloadImageTask((ImageView) findViewById(R.id.user_pic))
+                    .execute(strings.get(3));
+
+            TextView firstName = (TextView) findViewById(R.id.user_first_name);
+            TextView lastName = (TextView) findViewById(R.id.user_last_name);
+            TextView org = (TextView) findViewById(R.id.user_org);
+
+            firstName.setVisibility(View.VISIBLE);
+            firstName.setText(userFirstName);
+
+            lastName.setVisibility(View.VISIBLE);
+            lastName.setText(userLastName);
+
+            org.setVisibility(View.VISIBLE);
+            org.setText(userOrg);
+        }
+    }
+
+    private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
+        ImageView bmImage;
+
+        public DownloadImageTask(ImageView bmImage) {
+            this.bmImage = bmImage;
+        }
+
+        protected Bitmap doInBackground(String... urls) {
+            String urldisplay = urls[0];
+            Bitmap mIcon11 = null;
+            try {
+                InputStream in = new java.net.URL(urldisplay).openStream();
+                mIcon11 = BitmapFactory.decodeStream(in);
+            } catch (Exception e) {
+                Log.e("Error", e.getMessage());
+                e.printStackTrace();
+            }
+            return mIcon11;
+        }
+
+        protected void onPostExecute(Bitmap result) {
+            bmImage.setImageBitmap(result);
         }
     }
 }

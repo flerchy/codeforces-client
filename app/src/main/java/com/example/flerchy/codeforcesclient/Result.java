@@ -21,6 +21,8 @@ class Result {
         return user.handle;
     }
 
+    public String getPic() { return user.pic; }
+
     public String getLastName() {
         return user.lastName;
     }

@@ -71,6 +71,8 @@ public class MainActivity extends AppCompatActivity {
                 myIntent.putExtra("key", "21"); //Optional parameters
                 MainActivity.this.startActivity(myIntent);
                 return true;
+            // TODO: case R.id.start_update:
+            // create Service
             default:
                 return super.onOptionsItemSelected(item);
         }
