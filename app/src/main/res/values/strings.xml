@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">Codeforces</string>
-    <string name="search_user">Поиск пользователя</string>
-    <string name="search_hint">Введите хендл пользователя</string>
-    <string name="search_button">Поиск</string>
+    <string name="search_user">Search user</string>
+    <string name="search_hint">Enter user handle</string>
+    <string name="search_button">Search</string>
+    <string name="update"> Background update </string>
+    <string name="stop_update">Stop update</string>
 </resources>

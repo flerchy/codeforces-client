@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -39,44 +40,89 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<HashMap<String, Spanned>> myArrList = new ArrayList<>();
     RefreshFeedTask rfTask;
     ListView lvMain;
+    boolean serviceIsRunning;
+    Context context;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        serviceIsRunning = false;
         setContentView(R.layout.activity_main);
 
-        String url = "http://codeforces.com/api/recentActions?maxCount=5";
+        String url = "http://codeforces.com/api/recentActions?maxCount=10";
         Request request = new Request.Builder()
                 .url(url)
                 .build();
-        rfTask = new RefreshFeedTask(this);
+        context = this;
+        rfTask = new RefreshFeedTask(context);
         rfTask.execute(request);
         }
 
       @Override
       public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
+
         return true;
       }
+
+
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // получим идентификатор выбранного пункта меню
         int id = item.getItemId();
+        Log.d("id", item.getTitle().toString());
 
-
-        // Операции для выбранного пункта меню
         switch (id) {
             case R.id.action_search:
                 Intent myIntent = new Intent(MainActivity.this, SearchActivity.class);
-                myIntent.putExtra("key", "21"); //Optional parameters
                 MainActivity.this.startActivity(myIntent);
                 return true;
-            // TODO: case R.id.start_update:
-            // create Service
+            case R.id.start_update:
+                serviceIsRunning = true;
+                 Thread t = new Thread(new Runnable() {
+                    public void run() {
+                        while (serviceIsRunning) {
+                            rfTask = new RefreshFeedTask(context);
+                            try {
+                                String url = "http://codeforces.com/api/recentActions?maxCount=10";
+                                Request request = new Request.Builder()
+                                    .url(url)
+                                    .build();
+                                rfTask.execute(request);
+
+                                TimeUnit.SECONDS.sleep(5);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                });
+                t.start();
+                if (!serviceIsRunning) {
+                    t.interrupt();
+                }
+                return true;
+            case R.id.stop_update:
+                serviceIsRunning = false;
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        if(serviceIsRunning) {
+            menu.findItem(R.id.start_update).setVisible(false);
+            menu.findItem(R.id.stop_update).setVisible(true);
+        } else {
+            menu.findItem(R.id.stop_update).setVisible(false);
+            menu.findItem(R.id.start_update).setVisible(true);
+        }
+        return super.onPrepareOptionsMenu(menu);
+    }
+
     class RefreshFeedTask extends AsyncTask<Request, Void, ArrayList<HashMap<String, Spanned>>> {
 
         private OkHttpClient client = new OkHttpClient();
@@ -89,27 +135,20 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected ArrayList<HashMap<String, Spanned>> doInBackground(Request... requests) {
-            List<String> userString = new ArrayList<>();
-            String userFirstName = new String();
             try {
                 Response response = client.newCall(requests[0]).execute();
                 JSONParser parser = new JSONParser();
                 HashMap<String, Spanned> map;
                 final String responseData = response.body().string();
-                Log.d("response:", responseData);
                 respobj = parser.parse(responseData);
-                Log.d("response status:", respobj.getStatus());
                 int i = 0;
                 for(Result r : respobj.getResults()) {
                     if (r.getComment() != null) {
                         contents.add(r.getComment().getText());
-
-                        Log.d("result:", r.getComment().getText());
                     } else {
                         contents.add("");
                     }
                     titles.add(r.getBlogEntry().getTitle());
-                    Log.d("result:", r.getBlogEntry().getTitle());
                     map = new HashMap<>();
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
                         map.put("Title", Html.fromHtml(titles.get(i), Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH));
