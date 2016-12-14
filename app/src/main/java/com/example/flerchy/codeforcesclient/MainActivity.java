@@ -10,26 +10,16 @@ import android.text.Spanned;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
-import android.widget.TextView;
-
-import com.google.gson.JsonArray;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
-import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -37,19 +27,37 @@ import okhttp3.Response;
 public class MainActivity extends AppCompatActivity {
     List<String> titles = new ArrayList<>();
     List<String> contents = new ArrayList<>();
-    ArrayList<HashMap<String, Spanned>> myArrList = new ArrayList<>();
     RefreshFeedTask rfTask;
     ListView lvMain;
     boolean serviceIsRunning;
+    ArrayList<HashMap<String, Spanned>> myArrList;
+
     Context context;
+
+    @Override
+    public ArrayList<HashMap<String, Spanned>> onRetainCustomNonConfigurationInstance() {
+
+        Log.d("arrlist", String.valueOf(this.myArrList.size()));
+        Log.d("arrlist", String.valueOf(myArrList.size()));
+        return this.myArrList;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         serviceIsRunning = false;
+        myArrList = (ArrayList<HashMap<String, Spanned>>) getLastCustomNonConfigurationInstance();
         setContentView(R.layout.activity_main);
+        lvMain = (ListView) findViewById(R.id.lvMain);
 
+        if (myArrList != null) {
+            SimpleAdapter adapter = new SimpleAdapter(this, myArrList, android.R.layout.simple_list_item_2,
+                    new String[]{"Title", "Contents"},
+                    new int[]{android.R.id.text1, android.R.id.text2});
+            lvMain.setAdapter(adapter);
+        } else {
+            myArrList = new ArrayList<>();
+        }
         String url = "http://codeforces.com/api/recentActions?maxCount=10";
         Request request = new Request.Builder()
                 .url(url)
@@ -59,13 +67,11 @@ public class MainActivity extends AppCompatActivity {
         rfTask.execute(request);
         }
 
-      @Override
-      public boolean onCreateOptionsMenu(Menu menu) {
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
-
         return true;
-      }
-
+    }
 
 
     @Override
@@ -133,6 +139,7 @@ public class MainActivity extends AppCompatActivity {
             mContext = context;
         }
 
+        ArrayList<HashMap<String, Spanned>> newArrList = new ArrayList<>();
         @Override
         protected ArrayList<HashMap<String, Spanned>> doInBackground(Request... requests) {
             try {
@@ -157,25 +164,29 @@ public class MainActivity extends AppCompatActivity {
                         map.put("Title", Html.fromHtml(titles.get(i)));
                         map.put("Contents",  Html.fromHtml(contents.get(i)));
                     }
-                    myArrList.add(map);
+                    newArrList.add(map);
                     i++;
                 }
             } catch (IOException e) {
                 Log.e("FAIL:", "FAIL");
                 e.printStackTrace();
             }
-            return myArrList;
+            return newArrList;
         }
 
         @Override
         protected void onPostExecute(ArrayList<HashMap<String, Spanned>> hashMaps) {
             super.onPostExecute(hashMaps);
+            Log.e("after error", String.valueOf(myArrList.size()));
+            newArrList = hashMaps;
+            if (newArrList.size() == 0) {
+                newArrList = myArrList;
+            }
             lvMain = (ListView) findViewById(R.id.lvMain);
-            myArrList = hashMaps;
-            SimpleAdapter adapter = new SimpleAdapter(this.mContext, myArrList, android.R.layout.simple_list_item_2,
+            SimpleAdapter adapter = new SimpleAdapter(this.mContext, newArrList, android.R.layout.simple_list_item_2,
                     new String[] {"Title", "Contents"},
                     new int[] {android.R.id.text1, android.R.id.text2});
-
+            myArrList = newArrList;
             lvMain.setAdapter(adapter);
         }
     }
