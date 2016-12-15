@@ -13,8 +13,16 @@ import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Array;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,14 +39,11 @@ public class MainActivity extends AppCompatActivity {
     ListView lvMain;
     boolean serviceIsRunning;
     ArrayList<HashMap<String, Spanned>> myArrList;
-
+    String FILENAME = "json_log";
     Context context;
 
     @Override
     public ArrayList<HashMap<String, Spanned>> onRetainCustomNonConfigurationInstance() {
-
-        Log.d("arrlist", String.valueOf(this.myArrList.size()));
-        Log.d("arrlist", String.valueOf(myArrList.size()));
         return this.myArrList;
     }
 
@@ -135,6 +140,26 @@ public class MainActivity extends AppCompatActivity {
         private ResponseObject respobj = new ResponseObject();
         private Context mContext;
 
+        public String readSavedData(FileInputStream fIn) {
+            StringBuffer datax = new StringBuffer("");
+            try {
+                InputStreamReader isr = new InputStreamReader(fIn);
+                BufferedReader buffreader = new BufferedReader(isr);
+
+                String readString = buffreader.readLine();
+                while (readString != null) {
+                    datax.append(readString);
+                    readString = buffreader.readLine();
+                }
+
+                isr.close();
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+            return datax.toString();
+        }
+
+
         public RefreshFeedTask(Context context) {
             mContext = context;
         }
@@ -148,6 +173,23 @@ public class MainActivity extends AppCompatActivity {
                 HashMap<String, Spanned> map;
                 final String responseData = response.body().string();
                 respobj = parser.parse(responseData);
+
+                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput(FILENAME, Context.MODE_PRIVATE));
+                outputStreamWriter.write(responseData);
+                outputStreamWriter.close();
+                FileInputStream fis = null;
+                try {
+                    fis = openFileInput(FILENAME);
+                } catch (FileNotFoundException e1) {
+                    e1.printStackTrace();
+                }
+                String respFromFile = readSavedData(fis);
+                Log.e("resp from file1", respFromFile);
+                try {
+                    fis.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
                 int i = 0;
                 for(Result r : respobj.getResults()) {
                     if (r.getComment() != null) {
@@ -168,8 +210,42 @@ public class MainActivity extends AppCompatActivity {
                     i++;
                 }
             } catch (IOException e) {
-                Log.e("FAIL:", "FAIL");
-                e.printStackTrace();
+                JSONParser parser = new JSONParser();
+                HashMap<String, Spanned> map;
+
+                FileInputStream fis = null;
+                try {
+                    fis = openFileInput(FILENAME);
+                } catch (FileNotFoundException e1) {
+                    e1.printStackTrace();
+                }
+                String respFromFile = readSavedData(fis);
+                Log.e("resp from file2", respFromFile);
+                try {
+                    fis.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+                respobj = parser.parse(respFromFile);
+                int i = 0;
+                for (Result r : respobj.getResults()) {
+                    if (r.getComment() != null) {
+                        contents.add(r.getComment().getText());
+                    } else {
+                        contents.add("");
+                    }
+                    titles.add(r.getBlogEntry().getTitle());
+                    map = new HashMap<>();
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                        map.put("Title", Html.fromHtml(titles.get(i), Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH));
+                        map.put("Contents", Html.fromHtml(contents.get(i), Html.FROM_HTML_OPTION_USE_CSS_COLORS));
+                    } else {
+                        map.put("Title", Html.fromHtml(titles.get(i)));
+                        map.put("Contents", Html.fromHtml(contents.get(i)));
+                    }
+                    newArrList.add(map);
+                    i++;
+                }
             }
             return newArrList;
         }
