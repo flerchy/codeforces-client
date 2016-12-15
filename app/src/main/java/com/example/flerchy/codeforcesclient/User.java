@@ -8,14 +8,16 @@ import com.google.gson.annotations.SerializedName;
 
 class User {
     String handle;
-    String firstName;
-    String lastName;
-    String organization;
+    String firstName = "Anonymous";
+    String lastName = "Anonymous";
+    String organization = "None";
     @SerializedName("titlePhoto")
     String pic;
 
     public String getFirstName() {
-        return firstName;
+        if (firstName != null)
+            return firstName;
+        else return "Anonymous";
     }
 
     public String getHandle() {
@@ -23,11 +25,15 @@ class User {
     }
 
     public String getLastName() {
-        return lastName;
+        if (lastName != null)
+            return lastName;
+        else return "Anonymous";
     }
 
     public String getOrganization() {
-        return organization;
+        if (organization != null)
+            return organization;
+        else return "None";
     }
 
     public String getPic() { return pic; }

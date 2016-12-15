@@ -52,10 +52,10 @@ public class SearchActivity extends AppCompatActivity {
         @Override
         protected List<String> doInBackground(Request... requests) {
             List<String> userString = new ArrayList<>();
-            String userFirstName = "Anonymous";
-            String userLastName = "Anonymous";
-            String userOrg = "None";
-            String userPic = "http://s3.amazonaws.com/37assets/svn/765-default-avatar.png";
+            String userFirstName = null;
+            String userLastName = new String();
+            String userOrg = new String();
+            String userPic = new String();
             try {
                 Response response = client.newCall(requests[0]).execute();
                 JSONParser parser = new JSONParser();
@@ -68,14 +68,18 @@ public class SearchActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
             Log.d("response status:", respobj.getStatus());
-            Result r = respobj.getResults()[0];
-            if (r != null) {
-                userFirstName = r.getFirstName();
-                userLastName = r.getLastName();
-                userOrg = r.getOrganization();
-                userPic = r.getPic();
-                Log.d("result:", userFirstName);
-                Log.d("result:", r.getHandle());
+            if (respobj.getStatus().equals("FAILED")) {
+                userFirstName = "No user found";
+            } else {
+                Result r = respobj.getResults()[0];
+                if (r != null) {
+                    userFirstName = r.getFirstName();
+                    userLastName = r.getLastName();
+                    userOrg = r.getOrganization();
+                    userPic = r.getPic();
+                    Log.d("result:", userFirstName);
+                    Log.d("result:", r.getHandle());
+                }
             }
             userString.add(userFirstName);
             userString.add(userLastName);

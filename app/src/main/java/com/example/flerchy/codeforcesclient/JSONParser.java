@@ -17,7 +17,7 @@ class JSONParser {
     }
 
     ResponseObject parse(final String json) {
-        if (json.contains("\"firstName\":")) {
+        if (json.contains("\"handle\":")) {
             int leftIndex = json.indexOf("[");
             int rightIndex = json.indexOf("]");
             String result = json.substring(0, leftIndex) + "[{\"user\":" +

@@ -14,7 +14,9 @@ class Result {
     private User user;
 
     public String getFirstName() {
-        return user.firstName;
+        if (user.getFirstName() != null)
+            return this.getUser().getFirstName();
+        else return "Anonymous";
     }
 
     public String getHandle() {
@@ -24,11 +26,15 @@ class Result {
     public String getPic() { return user.pic; }
 
     public String getLastName() {
-        return user.lastName;
+        if (user.lastName != null)
+            return user.lastName;
+        else return "Anonymous";
     }
 
     public String getOrganization() {
-        return user.organization;
+        if (user.organization != null)
+            return user.organization;
+        else return "None";
     }
 
     int getTime() {
