@@ -21,11 +21,6 @@
         </activity>
         <activity android:name=".SearchActivity" />
 
-        <service
-            android:name=".FeedService"
-            android:enabled="true"
-            android:exported="true" />
-
         <receiver android:name=".WifiStateReceiver">
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />

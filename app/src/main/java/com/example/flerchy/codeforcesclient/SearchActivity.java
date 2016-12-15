@@ -63,24 +63,27 @@ public class SearchActivity extends AppCompatActivity {
                 Log.d("response:", responseData);
                 respobj = parser.parse(responseData);
                 Log.d("response status:", respobj.getStatus());
+                Log.d("response status:", respobj.getStatus());
+                if (respobj.getStatus().equals("FAILED")) {
+                    userFirstName = "No user found";
+                } else {
+                    Result r = respobj.getResults()[0];
+                    if (r != null) {
+                        userFirstName = r.getFirstName();
+                        userLastName = r.getLastName();
+                        userOrg = r.getOrganization();
+                        userPic = r.getPic();
+                        Log.d("result:", userFirstName);
+                        Log.d("result:", r.getHandle());
+                    }
+                }
+
             } catch (IOException e) {
                 Log.e("FAIL:", "FAIL");
                 e.printStackTrace();
+                userFirstName = "No internet";
             }
-            Log.d("response status:", respobj.getStatus());
-            if (respobj.getStatus().equals("FAILED")) {
-                userFirstName = "No user found";
-            } else {
-                Result r = respobj.getResults()[0];
-                if (r != null) {
-                    userFirstName = r.getFirstName();
-                    userLastName = r.getLastName();
-                    userOrg = r.getOrganization();
-                    userPic = r.getPic();
-                    Log.d("result:", userFirstName);
-                    Log.d("result:", r.getHandle());
-                }
-            }
+
             userString.add(userFirstName);
             userString.add(userLastName);
             userString.add(userOrg);

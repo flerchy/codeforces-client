@@ -78,6 +78,11 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        serviceIsRunning = false;
+    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -172,7 +177,6 @@ public class MainActivity extends AppCompatActivity {
                 JSONParser parser = new JSONParser();
                 HashMap<String, Spanned> map;
                 final String responseData = response.body().string();
-                respobj = parser.parse(responseData);
 
                 OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput(FILENAME, Context.MODE_PRIVATE));
                 outputStreamWriter.write(responseData);
@@ -185,11 +189,13 @@ public class MainActivity extends AppCompatActivity {
                 }
                 String respFromFile = readSavedData(fis);
                 Log.e("resp from file1", respFromFile);
+                Log.e("respString", responseData);
                 try {
                     fis.close();
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
+                respobj = parser.parse(responseData);
                 int i = 0;
                 for(Result r : respobj.getResults()) {
                     if (r.getComment() != null) {
@@ -254,10 +260,7 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(ArrayList<HashMap<String, Spanned>> hashMaps) {
             super.onPostExecute(hashMaps);
             Log.e("after error", String.valueOf(myArrList.size()));
-            newArrList = hashMaps;
-            if (newArrList.size() == 0) {
-                newArrList = myArrList;
-            }
+            myArrList = hashMaps;
             lvMain = (ListView) findViewById(R.id.lvMain);
             SimpleAdapter adapter = new SimpleAdapter(this.mContext, newArrList, android.R.layout.simple_list_item_2,
                     new String[] {"Title", "Contents"},
