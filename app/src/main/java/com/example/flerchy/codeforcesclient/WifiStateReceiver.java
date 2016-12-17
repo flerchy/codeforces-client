@@ -18,16 +18,15 @@ public class WifiStateReceiver extends BroadcastReceiver {
         boolean isConnected = nw != null && nw.isConnectedOrConnecting();
         String status;
         if (isConnected) {
-            status = "Connected";
+            status = context.getString(R.string.connected_status);
         } else {
-            status = "Disconnected";
+            status = context.getString(R.string.warning);
         }
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(context)
                         .setSmallIcon(R.drawable.ic_icon)
-                        .setContentTitle("Network status")
-                        .setContentText("Check your network status!" + status);
-
+                        .setContentTitle(context.getString(R.string.note_title))
+                        .setContentText(status);
         NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(1, mBuilder.build());
 

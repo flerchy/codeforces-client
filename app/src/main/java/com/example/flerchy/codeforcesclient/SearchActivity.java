@@ -51,11 +51,12 @@ public class SearchActivity extends AppCompatActivity {
 
         @Override
         protected List<String> doInBackground(Request... requests) {
+            //todo:rewrite with picasa
             List<String> userString = new ArrayList<>();
             String userFirstName = null;
-            String userLastName = new String();
-            String userOrg = new String();
-            String userPic = new String();
+            String userLastName = "";
+            String userOrg = "";
+            String userPic = "";
             try {
                 Response response = client.newCall(requests[0]).execute();
                 JSONParser parser = new JSONParser();
@@ -65,7 +66,7 @@ public class SearchActivity extends AppCompatActivity {
                 Log.d("response status:", respobj.getStatus());
                 Log.d("response status:", respobj.getStatus());
                 if (respobj.getStatus().equals("FAILED")) {
-                    userFirstName = "No user found";
+                    userFirstName = getString(R.string.no_user);
                 } else {
                     Result r = respobj.getResults()[0];
                     if (r != null) {
@@ -81,7 +82,7 @@ public class SearchActivity extends AppCompatActivity {
             } catch (IOException e) {
                 Log.e("FAIL:", "FAIL");
                 e.printStackTrace();
-                userFirstName = "No internet";
+                userFirstName = getString(R.string.no_inet);
             }
 
             userString.add(userFirstName);

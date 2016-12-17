@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             myArrList = new ArrayList<>();
         }
-        String url = "http://codeforces.com/api/recentActions?maxCount=10";
+        String url = "http://codeforces.com/api/recentActions?maxCount=15";
         Request request = new Request.Builder()
                 .url(url)
                 .build();
@@ -95,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
                 MainActivity.this.startActivity(myIntent);
                 return true;
             case R.id.start_update:
+                //todo:rewrite with handler
                 serviceIsRunning = true;
                  Thread t = new Thread(new Runnable() {
                     public void run() {
@@ -142,19 +143,18 @@ public class MainActivity extends AppCompatActivity {
     class RefreshFeedTask extends AsyncTask<Request, Void, ArrayList<HashMap<String, Spanned>>> {
 
         private OkHttpClient client = new OkHttpClient();
-        private ResponseObject respobj = new ResponseObject();
         private Context mContext;
 
         public String readSavedData(FileInputStream fIn) {
             StringBuffer datax = new StringBuffer("");
             try {
                 InputStreamReader isr = new InputStreamReader(fIn);
-                BufferedReader buffreader = new BufferedReader(isr);
+                BufferedReader buffReader = new BufferedReader(isr);
 
-                String readString = buffreader.readLine();
+                String readString = buffReader.readLine();
                 while (readString != null) {
                     datax.append(readString);
-                    readString = buffreader.readLine();
+                    readString = buffReader.readLine();
                 }
 
                 isr.close();
@@ -174,51 +174,12 @@ public class MainActivity extends AppCompatActivity {
         protected ArrayList<HashMap<String, Spanned>> doInBackground(Request... requests) {
             try {
                 Response response = client.newCall(requests[0]).execute();
-                JSONParser parser = new JSONParser();
-                HashMap<String, Spanned> map;
                 final String responseData = response.body().string();
-
                 OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput(FILENAME, Context.MODE_PRIVATE));
                 outputStreamWriter.write(responseData);
                 outputStreamWriter.close();
-                FileInputStream fis = null;
-                try {
-                    fis = openFileInput(FILENAME);
-                } catch (FileNotFoundException e1) {
-                    e1.printStackTrace();
-                }
-                String respFromFile = readSavedData(fis);
-                Log.e("resp from file1", respFromFile);
-                Log.e("respString", responseData);
-                try {
-                    fis.close();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-                respobj = parser.parse(responseData);
-                int i = 0;
-                for(Result r : respobj.getResults()) {
-                    if (r.getComment() != null) {
-                        contents.add(r.getComment().getText());
-                    } else {
-                        contents.add("");
-                    }
-                    titles.add(r.getBlogEntry().getTitle());
-                    map = new HashMap<>();
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                        map.put("Title", Html.fromHtml(titles.get(i), Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH));
-                        map.put("Contents",  Html.fromHtml(contents.get(i), Html.FROM_HTML_OPTION_USE_CSS_COLORS));
-                    } else {
-                        map.put("Title", Html.fromHtml(titles.get(i)));
-                        map.put("Contents",  Html.fromHtml(contents.get(i)));
-                    }
-                    newArrList.add(map);
-                    i++;
-                }
+                return parseData(responseData);
             } catch (IOException e) {
-                JSONParser parser = new JSONParser();
-                HashMap<String, Spanned> map;
-
                 FileInputStream fis = null;
                 try {
                     fis = openFileInput(FILENAME);
@@ -226,48 +187,59 @@ public class MainActivity extends AppCompatActivity {
                     e1.printStackTrace();
                 }
                 String respFromFile = readSavedData(fis);
-                Log.e("resp from file2", respFromFile);
                 try {
                     fis.close();
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
-                respobj = parser.parse(respFromFile);
-                int i = 0;
-                for (Result r : respobj.getResults()) {
-                    if (r.getComment() != null) {
-                        contents.add(r.getComment().getText());
-                    } else {
-                        contents.add("");
-                    }
-                    titles.add(r.getBlogEntry().getTitle());
-                    map = new HashMap<>();
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                        map.put("Title", Html.fromHtml(titles.get(i), Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH));
-                        map.put("Contents", Html.fromHtml(contents.get(i), Html.FROM_HTML_OPTION_USE_CSS_COLORS));
-                    } else {
-                        map.put("Title", Html.fromHtml(titles.get(i)));
-                        map.put("Contents", Html.fromHtml(contents.get(i)));
-                    }
-                    newArrList.add(map);
-                    i++;
-                }
+                return parseData(respFromFile);
             }
-            return newArrList;
+        }
+
+
+        public HashMap<String, Spanned> HTMLWrapper(String title, String content) {
+            HashMap<String, Spanned> map;
+            map = new HashMap<>();
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                map.put("Title", Html.fromHtml(title, Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH));
+                map.put("Contents", Html.fromHtml(content, Html.FROM_HTML_OPTION_USE_CSS_COLORS));
+            } else {
+                map.put("Title", Html.fromHtml(title));
+                map.put("Contents", Html.fromHtml(content));
+            }
+            return map;
         }
 
         @Override
         protected void onPostExecute(ArrayList<HashMap<String, Spanned>> hashMaps) {
             super.onPostExecute(hashMaps);
-            Log.e("after error", String.valueOf(myArrList.size()));
-            myArrList = hashMaps;
+            newArrList = hashMaps;
             lvMain = (ListView) findViewById(R.id.lvMain);
             SimpleAdapter adapter = new SimpleAdapter(this.mContext, newArrList, android.R.layout.simple_list_item_2,
                     new String[] {"Title", "Contents"},
                     new int[] {android.R.id.text1, android.R.id.text2});
-            myArrList = newArrList;
+            newArrList = hashMaps;
             lvMain.setAdapter(adapter);
         }
+
+        private ArrayList<HashMap<String, Spanned>> parseData(String respString) {
+            JSONParser parser = new JSONParser();
+            ResponseObject respObj = parser.parse(respString);
+            int i = 0;
+            for(Result r : respObj.getResults()) {
+                if (r.getComment() != null) {
+                    contents.add(r.getComment().getText());
+                } else {
+                    contents.add("");
+                }
+                titles.add(r.getBlogEntry().getTitle());
+
+                newArrList.add(HTMLWrapper(titles.get(i), contents.get(i)));
+                i++;
+            }
+            return newArrList;
+        }
+
     }
 }
 

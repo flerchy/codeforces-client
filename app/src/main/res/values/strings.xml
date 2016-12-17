@@ -5,4 +5,9 @@
     <string name="search_button">Search</string>
     <string name="update"> Background update </string>
     <string name="stop_update">Stop update</string>
+    <string name="note_title">"Network status"</string>
+    <string name="warning">Check your internet connection! You are disconnected</string>
+    <string name="connected_status">Connected to internet</string>
+    <string name="no_user">No user found</string>
+    <string name="no_inet">No internet</string>
 </resources>
