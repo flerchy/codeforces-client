@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
 import android.text.Spanned;
@@ -33,36 +34,20 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
-    List<String> titles = new ArrayList<>();
-    List<String> contents = new ArrayList<>();
-    RefreshFeedTask rfTask;
     ListView lvMain;
     boolean serviceIsRunning;
-    ArrayList<HashMap<String, Spanned>> myArrList;
     String FILENAME = "json_log";
     Context context;
+    private Handler mHandler = new Handler();
 
-    @Override
-    public ArrayList<HashMap<String, Spanned>> onRetainCustomNonConfigurationInstance() {
-        return this.myArrList;
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        RefreshFeedTask rfTask;
         super.onCreate(savedInstanceState);
         serviceIsRunning = false;
-        myArrList = (ArrayList<HashMap<String, Spanned>>) getLastCustomNonConfigurationInstance();
-        setContentView(R.layout.activity_main);
+       setContentView(R.layout.activity_main);
         lvMain = (ListView) findViewById(R.id.lvMain);
-
-        if (myArrList != null) {
-            SimpleAdapter adapter = new SimpleAdapter(this, myArrList, android.R.layout.simple_list_item_2,
-                    new String[]{"Title", "Contents"},
-                    new int[]{android.R.id.text1, android.R.id.text2});
-            lvMain.setAdapter(adapter);
-        } else {
-            myArrList = new ArrayList<>();
-        }
         String url = "http://codeforces.com/api/recentActions?maxCount=15";
         Request request = new Request.Builder()
                 .url(url)
@@ -95,38 +80,33 @@ public class MainActivity extends AppCompatActivity {
                 MainActivity.this.startActivity(myIntent);
                 return true;
             case R.id.start_update:
-                //todo:rewrite with handler
                 serviceIsRunning = true;
-                 Thread t = new Thread(new Runnable() {
-                    public void run() {
-                        while (serviceIsRunning) {
-                            rfTask = new RefreshFeedTask(context);
-                            try {
-                                String url = "http://codeforces.com/api/recentActions?maxCount=10";
-                                Request request = new Request.Builder()
-                                    .url(url)
-                                    .build();
-                                rfTask.execute(request);
-
-                                TimeUnit.SECONDS.sleep(5);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                });
-                t.start();
-                if (!serviceIsRunning) {
-                    t.interrupt();
-                }
+                mHandler.removeCallbacks(refreshFeed);
+                mHandler.postDelayed(refreshFeed, 3000);
+                //todo:rewrite with handler
                 return true;
             case R.id.stop_update:
                 serviceIsRunning = false;
+                mHandler.removeCallbacks(refreshFeed);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
+
+    private Runnable refreshFeed = new Runnable() {
+        public void run() {
+            RefreshFeedTask rfTask;
+            rfTask = new RefreshFeedTask(context);
+                String url = "http://codeforces.com/api/recentActions?maxCount=10";
+                Request request = new Request.Builder()
+                        .url(url)
+                        .build();
+                rfTask.execute(request);
+            mHandler.postDelayed(this, 3000);
+        }
+    };
+
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
@@ -169,17 +149,18 @@ public class MainActivity extends AppCompatActivity {
             mContext = context;
         }
 
-        ArrayList<HashMap<String, Spanned>> newArrList = new ArrayList<>();
         @Override
         protected ArrayList<HashMap<String, Spanned>> doInBackground(Request... requests) {
             try {
                 Response response = client.newCall(requests[0]).execute();
                 final String responseData = response.body().string();
+                Log.e("ok!", responseData);
                 OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput(FILENAME, Context.MODE_PRIVATE));
                 outputStreamWriter.write(responseData);
                 outputStreamWriter.close();
                 return parseData(responseData);
             } catch (IOException e) {
+                Log.e("exception", "sorry");
                 FileInputStream fis = null;
                 try {
                     fis = openFileInput(FILENAME);
@@ -196,6 +177,19 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+        @Override
+        protected void onPostExecute(ArrayList<HashMap<String, Spanned>> hashMaps) {
+            super.onPostExecute(hashMaps);
+            ArrayList<HashMap<String, Spanned>> newArrList;
+            Log.e("last title", String.valueOf(hashMaps.get(0).get("Contents")));
+            newArrList = hashMaps;
+            lvMain = (ListView) findViewById(R.id.lvMain);
+            SimpleAdapter adapter = new SimpleAdapter(this.mContext, newArrList, android.R.layout.simple_list_item_2,
+                    new String[] {"Title", "Contents"},
+                    new int[] {android.R.id.text1, android.R.id.text2});
+            lvMain.setAdapter(adapter);
+        }
+
 
         public HashMap<String, Spanned> HTMLWrapper(String title, String content) {
             HashMap<String, Spanned> map;
@@ -210,19 +204,10 @@ public class MainActivity extends AppCompatActivity {
             return map;
         }
 
-        @Override
-        protected void onPostExecute(ArrayList<HashMap<String, Spanned>> hashMaps) {
-            super.onPostExecute(hashMaps);
-            newArrList = hashMaps;
-            lvMain = (ListView) findViewById(R.id.lvMain);
-            SimpleAdapter adapter = new SimpleAdapter(this.mContext, newArrList, android.R.layout.simple_list_item_2,
-                    new String[] {"Title", "Contents"},
-                    new int[] {android.R.id.text1, android.R.id.text2});
-            newArrList = hashMaps;
-            lvMain.setAdapter(adapter);
-        }
-
         private ArrayList<HashMap<String, Spanned>> parseData(String respString) {
+            List<String> titles = new ArrayList<>();
+            List<String> contents = new ArrayList<>();
+            ArrayList<HashMap<String, Spanned>> hashMaps = new ArrayList<>();
             JSONParser parser = new JSONParser();
             ResponseObject respObj = parser.parse(respString);
             int i = 0;
@@ -233,11 +218,10 @@ public class MainActivity extends AppCompatActivity {
                     contents.add("");
                 }
                 titles.add(r.getBlogEntry().getTitle());
-
-                newArrList.add(HTMLWrapper(titles.get(i), contents.get(i)));
+                hashMaps.add(HTMLWrapper(titles.get(i), contents.get(i)));
                 i++;
             }
-            return newArrList;
+            return hashMaps;
         }
 
     }
