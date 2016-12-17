@@ -36,7 +36,7 @@ import okhttp3.Response;
 public class MainActivity extends AppCompatActivity {
     ListView lvMain;
     boolean serviceIsRunning;
-    String FILENAME = "json_log";
+    String FILENAME = getString(R.string.filename);
     Context context;
     private Handler mHandler = new Handler();
 
@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
         serviceIsRunning = false;
        setContentView(R.layout.activity_main);
         lvMain = (ListView) findViewById(R.id.lvMain);
-        String url = "http://codeforces.com/api/recentActions?maxCount=15";
+        String url = getString(R.string.feed_request);
         Request request = new Request.Builder()
                 .url(url)
                 .build();
@@ -82,8 +82,7 @@ public class MainActivity extends AppCompatActivity {
             case R.id.start_update:
                 serviceIsRunning = true;
                 mHandler.removeCallbacks(refreshFeed);
-                mHandler.postDelayed(refreshFeed, 3000);
-                //todo:rewrite with handler
+                mHandler.postDelayed(refreshFeed, 15000);
                 return true;
             case R.id.stop_update:
                 serviceIsRunning = false;
@@ -98,12 +97,12 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
             RefreshFeedTask rfTask;
             rfTask = new RefreshFeedTask(context);
-                String url = "http://codeforces.com/api/recentActions?maxCount=10";
+                String url = getString(R.string.feed_request);
                 Request request = new Request.Builder()
                         .url(url)
                         .build();
                 rfTask.execute(request);
-            mHandler.postDelayed(this, 3000);
+            mHandler.postDelayed(this, 15000);
         }
     };
 
@@ -125,8 +124,8 @@ public class MainActivity extends AppCompatActivity {
         private OkHttpClient client = new OkHttpClient();
         private Context mContext;
 
-        public String readSavedData(FileInputStream fIn) {
-            StringBuffer datax = new StringBuffer("");
+        String readSavedData(FileInputStream fIn) {
+            StringBuilder datax = new StringBuilder("");
             try {
                 InputStreamReader isr = new InputStreamReader(fIn);
                 BufferedReader buffReader = new BufferedReader(isr);
@@ -145,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-        public RefreshFeedTask(Context context) {
+        RefreshFeedTask(Context context) {
             mContext = context;
         }
 
@@ -169,7 +168,9 @@ public class MainActivity extends AppCompatActivity {
                 }
                 String respFromFile = readSavedData(fis);
                 try {
-                    fis.close();
+                    if (fis != null) {
+                        fis.close();
+                    }
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
@@ -181,25 +182,25 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(ArrayList<HashMap<String, Spanned>> hashMaps) {
             super.onPostExecute(hashMaps);
             ArrayList<HashMap<String, Spanned>> newArrList;
-            Log.e("last title", String.valueOf(hashMaps.get(0).get("Contents")));
+            Log.e("last title", String.valueOf(hashMaps.get(0).get(getString(R.string.title))));
             newArrList = hashMaps;
             lvMain = (ListView) findViewById(R.id.lvMain);
             SimpleAdapter adapter = new SimpleAdapter(this.mContext, newArrList, android.R.layout.simple_list_item_2,
-                    new String[] {"Title", "Contents"},
+                    new String[] {getString(R.string.contents), getString(R.string.title)},
                     new int[] {android.R.id.text1, android.R.id.text2});
             lvMain.setAdapter(adapter);
         }
 
 
-        public HashMap<String, Spanned> HTMLWrapper(String title, String content) {
+        HashMap<String, Spanned> HTMLWrapper(String title, String content) {
             HashMap<String, Spanned> map;
             map = new HashMap<>();
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                map.put("Title", Html.fromHtml(title, Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH));
-                map.put("Contents", Html.fromHtml(content, Html.FROM_HTML_OPTION_USE_CSS_COLORS));
+                map.put(getString(R.string.title), Html.fromHtml(title, Html.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH));
+                map.put(getString(R.string.contents), Html.fromHtml(content, Html.FROM_HTML_OPTION_USE_CSS_COLORS));
             } else {
-                map.put("Title", Html.fromHtml(title));
-                map.put("Contents", Html.fromHtml(content));
+                map.put(getString(R.string.title), Html.fromHtml(title));
+                map.put(getString(R.string.contents), Html.fromHtml(content));
             }
             return map;
         }

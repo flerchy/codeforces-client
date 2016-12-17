@@ -10,4 +10,11 @@
     <string name="connected_status">Connected to internet</string>
     <string name="no_user">No user found</string>
     <string name="no_inet">No internet</string>
+    <string name="title">Title</string>
+    <string name="contents">Contents</string>
+    <string name="feed_request">http://codeforces.com/api/recentActions?maxCount=10</string>
+    <string name="filename">json_log</string>
+    <string name="user_request">http://codeforces.com/api/user.info</string>
+    <string name="add_handle">handles</string>
+    <string name="fail">FAILED</string>
 </resources>

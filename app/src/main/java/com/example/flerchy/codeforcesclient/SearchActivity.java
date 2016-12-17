@@ -1,5 +1,6 @@
 package com.example.flerchy.codeforcesclient;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
@@ -10,6 +11,8 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,9 +33,9 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     public void onSearchClick(View view) throws InterruptedException {
-        fuTask = new FindUserTask();
-        HttpUrl.Builder urlBuilder = HttpUrl.parse("http://codeforces.com/api/user.info").newBuilder();
-        urlBuilder.addQueryParameter("handles", ((EditText) findViewById(R.id.user_name)).getText().toString());
+        fuTask = new FindUserTask(SearchActivity.this);
+        HttpUrl.Builder urlBuilder = HttpUrl.parse(getString(R.string.user_request)).newBuilder();
+        urlBuilder.addQueryParameter(getString(R.string.add_handle), ((EditText) findViewById(R.id.user_name)).getText().toString());
         String url = urlBuilder.build().toString();
         Log.d("url:", url);
         Request request = new Request.Builder()
@@ -46,13 +49,20 @@ public class SearchActivity extends AppCompatActivity {
 
     class FindUserTask extends AsyncTask<Request, Void, List<String>> {
 
+        private Context mContext;
         private OkHttpClient client = new OkHttpClient();
         private ResponseObject respobj = new ResponseObject();
 
+
+        FindUserTask(Context context) {
+            mContext = context;
+        }
+
         @Override
         protected List<String> doInBackground(Request... requests) {
-            //todo:rewrite with picasa
+
             List<String> userString = new ArrayList<>();
+
             String userFirstName = null;
             String userLastName = "";
             String userOrg = "";
@@ -65,7 +75,7 @@ public class SearchActivity extends AppCompatActivity {
                 respobj = parser.parse(responseData);
                 Log.d("response status:", respobj.getStatus());
                 Log.d("response status:", respobj.getStatus());
-                if (respobj.getStatus().equals("FAILED")) {
+                if (respobj.getStatus().equals(getString(R.string.fail))) {
                     userFirstName = getString(R.string.no_user);
                 } else {
                     Result r = respobj.getResults()[0];
@@ -99,8 +109,7 @@ public class SearchActivity extends AppCompatActivity {
             String userLastName = strings.get(1);
             String userOrg = strings.get(2);
 
-            new DownloadImageTask((ImageView) findViewById(R.id.user_pic))
-                    .execute(strings.get(3));
+            Picasso.with(mContext).load(strings.get(3)).into((ImageView)findViewById(R.id.user_pic));
 
             TextView firstName = (TextView) findViewById(R.id.user_first_name);
             TextView lastName = (TextView) findViewById(R.id.user_last_name);
@@ -117,29 +126,6 @@ public class SearchActivity extends AppCompatActivity {
         }
     }
 
-    private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
-        ImageView bmImage;
 
-        public DownloadImageTask(ImageView bmImage) {
-            this.bmImage = bmImage;
-        }
-
-        protected Bitmap doInBackground(String... urls) {
-            String urldisplay = urls[0];
-            Bitmap mIcon11 = null;
-            try {
-                InputStream in = new java.net.URL(urldisplay).openStream();
-                mIcon11 = BitmapFactory.decodeStream(in);
-            } catch (Exception e) {
-                Log.e("Error", e.getMessage());
-                e.printStackTrace();
-            }
-            return mIcon11;
-        }
-
-        protected void onPostExecute(Bitmap result) {
-            bmImage.setImageBitmap(result);
-        }
-    }
 }
 
